@@ -3,6 +3,8 @@ package base.impl;
 
 import android.app.Activity;
 import android.text.TextUtils;
+import android.view.View;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.example.cleverboy.myapplication.MainActivity;
@@ -83,7 +85,7 @@ public class NewsCenterPager extends BasePager {
         pagers = new ArrayList<BaseMenuDetatilPager>();
         pagers.add(new NewsMenuDetailPager(mActivity,newsMenuData.data.get(0).children));
         pagers.add(new TopicMenuDetailPager(mActivity));
-        pagers.add(new PhotosMenuDetailPager(mActivity));
+        pagers.add(new PhotosMenuDetailPager(mActivity, btnGrid));
         pagers.add(new InteractMenuDetailPager(mActivity));
 
         setCurrentMenuDetailPager(0);
@@ -95,5 +97,10 @@ public class NewsCenterPager extends BasePager {
         flContent.addView(pager.mRootView);
         pager.initData();
         tvTitle.setText(newsMenuData.data.get(position).title);
+        if(pager instanceof PhotosMenuDetailPager){
+            btnGrid.setVisibility(View.VISIBLE);
+        }else{
+            btnGrid.setVisibility(View.GONE);
+        }
     }
 }

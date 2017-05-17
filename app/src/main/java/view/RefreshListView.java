@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
 import android.widget.AbsListView;
+import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -21,7 +22,7 @@ import java.util.Date;
  * Created by clever boy on 2017/5/4.
  */
 
-public class RefreshListView extends ListView implements AbsListView.OnScrollListener{
+public class RefreshListView extends ListView implements AbsListView.OnScrollListener,AdapterView.OnItemClickListener{
     private static final int STATE_PULL_TO_REFRESH = 1;
     private static final int STATE_RELEASE_TO_REFRESH = 2;
     private static final int STATE_REFRESHING = 3;
@@ -218,10 +219,26 @@ public class RefreshListView extends ListView implements AbsListView.OnScrollLis
     public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
 
     }
+    private OnItemClickListener mOnItemClickListener;
+
+    @Override
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        mOnItemClickListener = listener;
+        super.setOnItemClickListener(this);
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        if(mOnItemClickListener != null){
+            mOnItemClickListener.onItemClick(parent,view,position - 2,id);
+        }
+    }
+
     /**
      * 刷新回调
      */
     private OnRefreshListener mListener;
+
     public interface OnRefreshListener{
         public void onRefresh();
         public void loadMore();

@@ -9,7 +9,6 @@
     android:layout_height="wrap_content"
     android:layout_centerHorizontal="true"
     android:layout_centerVertical="true"
-    android:text="标题"
     android:textColor="#fff"
     android:textSize="22sp"
     />
@@ -24,6 +23,53 @@
         android:layout_alignParentLeft="true"
         android:layout_marginLeft="12dp"
         />
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@null"
+        android:src="@mipmap/back"
+        android:id="@+id/btn_back"
+        android:visibility="gone"
+        android:layout_centerVertical="true"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="12dp"
+        />
+    <LinearLayout
+        android:id="@+id/ll_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:orientation="horizontal"
+        android:layout_marginRight="10dp"
+        android:visibility="gone">
 
-
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@null"
+        android:src="@mipmap/icon_textsize"
+        android:id="@+id/btn_textsize"
+        android:paddingRight="20dp"
+        />
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@null"
+            android:src="@mipmap/icon_share"
+            android:id="@+id/btn_share"
+            android:paddingRight="10dp"
+            />
+</LinearLayout>
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@null"
+        android:src="@mipmap/icon_pic_list_type"
+        android:id="@+id/btn_grid"
+        android:visibility="gone"
+        android:layout_centerVertical="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="15dp"
+        />
 </RelativeLayout>

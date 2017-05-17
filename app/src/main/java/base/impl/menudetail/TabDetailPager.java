@@ -1,17 +1,24 @@
 package base.impl.menudetail;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.graphics.Color;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.text.TextUtils;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.cleverboy.myapplication.NewsDetailActivity;
 import com.example.cleverboy.myapplication.R;
 import com.google.gson.Gson;
 import com.lidroid.xutils.BitmapUtils;
@@ -31,6 +38,7 @@ import domain.NewsData;
 import domain.NewsMenuData;
 import global.Constants;
 import utils.CacheUtils;
+import utils.PrefUtils;
 import view.HorizontalScrollViewPager;
 import view.RefreshListView;
 
@@ -52,6 +60,7 @@ public class TabDetailPager extends BaseMenuDetatilPager {
     private ArrayList<NewsData.News> mNewsList;
     private MyAdapter mNewsAdapter;
     private String mMoreUrl;
+    private Handler mHandler = null;
 
     public TabDetailPager(Activity activity, NewsMenuData.NewsTabData tabData) {
         super(activity);
@@ -82,13 +91,47 @@ public class TabDetailPager extends BaseMenuDetatilPager {
 
             @Override
             public void loadMore() {
-                if(mMoreUrl != null){
+                if (mMoreUrl != null) {
                     getMoreDataFromServer();
-                }else{
+                } else {
                     lvList.onRefreshComplete(true);
                     Toast.makeText(mActivity, "没有更多数据了", Toast.LENGTH_SHORT).show();
                 }
 
+            }
+        });
+
+        lvList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                TextView tvTitle = (TextView) view.findViewById(R.id.tv_title);
+                tvTitle.setTextColor(Color.GRAY);
+                NewsData.News news = mNewsList.get(position);
+                String readIds = PrefUtils.getString("read_ids", "", mActivity);
+                if (!readIds.contains(news.id)) {
+                    readIds = readIds + news.id + ",";
+                    PrefUtils.putString("read_ids", readIds, mActivity);
+                }
+                //跳转到详情页
+                Intent intent = new Intent(mActivity, NewsDetailActivity.class);
+                intent.putExtra("url", news.url);
+                mActivity.startActivity(intent);
+            }
+        });
+
+        mViewPager.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        mHandler.removeCallbacksAndMessages(null);
+                        break;
+                    case MotionEvent.ACTION_CANCEL:
+                    case MotionEvent.ACTION_UP:
+                        mHandler.sendEmptyMessageDelayed(0, 2000);
+                        break;
+                }
+                return false;
             }
         });
         return view;
@@ -98,7 +141,7 @@ public class TabDetailPager extends BaseMenuDetatilPager {
     public void initData() {
         String cache = CacheUtils.getCache(mUrl, mActivity);
         if (!TextUtils.isEmpty(cache)) {
-            processResult(cache,false);
+            processResult(cache, false);
         }
         getDataFromServer();
     }
@@ -112,7 +155,7 @@ public class TabDetailPager extends BaseMenuDetatilPager {
                 String result = responseInfo.result;
 //                System.out.println(result);
                 CacheUtils.setCache(mUrl, result, mActivity);
-                processResult(result,false);
+                processResult(result, false);
                 lvList.onRefreshComplete(true);
             }
 
@@ -120,11 +163,12 @@ public class TabDetailPager extends BaseMenuDetatilPager {
             public void onFailure(HttpException error, String msg) {
 //                System.out.println(error+msg);
                 lvList.onRefreshComplete(false);
-                Toast.makeText(mActivity, "获取失败", Toast.LENGTH_SHORT).show();
+                Toast.makeText(mActivity, "是是是", Toast.LENGTH_SHORT).show();
             }
         });
     }
-    public void getMoreDataFromServer(){
+
+    public void getMoreDataFromServer() {
         HttpUtils utils = new HttpUtils();
         utils.send(HttpRequest.HttpMethod.GET, mMoreUrl, new RequestCallBack<String>() {
 
@@ -148,17 +192,17 @@ public class TabDetailPager extends BaseMenuDetatilPager {
     }
 
     //处理网络数据
-    private void processResult(String result,boolean isMore) {
+    private void processResult(String result, boolean isMore) {
         Gson gson = new Gson();
         newsData = gson.fromJson(result, NewsData.class);
 
-            if (!TextUtils.isEmpty(newsData.data.more)) {
+        if (!TextUtils.isEmpty(newsData.data.more)) {
 
-                mMoreUrl = Constants.SERVER_URL + newsData.data.more;
-            } else {
-                mMoreUrl = null;
-            }
-        if(!isMore) {
+            mMoreUrl = Constants.SERVER_URL + newsData.data.more;
+        } else {
+            mMoreUrl = null;
+        }
+        if (!isMore) {
             mTopNewsList = newsData.data.topnews;
 
             if (mTopNewsList != null) {
@@ -177,12 +221,10 @@ public class TabDetailPager extends BaseMenuDetatilPager {
 
                     @Override
                     public void onPageSelected(int position) {
-
                     }
 
                     @Override
                     public void onPageScrollStateChanged(int state) {
-
                     }
                 });
                 // 初始化新闻列表
@@ -192,8 +234,23 @@ public class TabDetailPager extends BaseMenuDetatilPager {
                     lvList.setAdapter(mNewsAdapter);
                 }
             }
-        }
-        else{
+            if (mHandler == null) {
+                mHandler = new Handler() {
+                    @Override
+                    public void handleMessage(Message msg) {
+                        int currentItem = mViewPager.getCurrentItem();
+                        if (currentItem < mTopNewsList.size() - 1) {
+                            currentItem++;
+                        } else {
+                            currentItem = 0;
+                        }
+                        mViewPager.setCurrentItem(currentItem);
+                        mHandler.sendEmptyMessageDelayed(0, 2000);
+                    }
+                };
+                mHandler.sendEmptyMessageDelayed(0, 2000);
+            }
+        } else {
             ArrayList<NewsData.News> moreData = newsData.data.news;
             mNewsList.addAll(moreData);
             mNewsAdapter.notifyDataSetChanged();
@@ -276,6 +333,14 @@ public class TabDetailPager extends BaseMenuDetatilPager {
             holder.tvTitle.setText(news.title);
             holder.tvDate.setText(news.pubdate);
             mBitmapUtils.display(holder.ivIcon, news.listimage);
+
+            //标记已读和未读
+            String readIds = PrefUtils.getString("read_ids", "", mActivity);
+            if (readIds.contains(news.id)) {
+                holder.tvTitle.setTextColor(Color.GRAY);
+            } else {
+                holder.tvTitle.setTextColor(Color.BLACK);
+            }
             return convertView;
         }
     }
